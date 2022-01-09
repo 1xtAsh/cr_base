@@ -114,4 +114,7 @@
     <!-- Overlays that to be enabled in FHD+ resolution -->
     <string-array name="config_fhdResolutionOverlays" translatable="false">
     </string-array>
+
+    <!-- Whether to force enable multi resolution configuration for camera -->
+    <bool name="config_forceMultiResolution">false</bool>
 </resources>

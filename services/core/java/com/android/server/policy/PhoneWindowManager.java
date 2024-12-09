@@ -2273,6 +2273,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             case PLAY_PAUSE_MUSIC:
                 triggerVirtualKeypress(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
                 break;
+            case VOLUME_PANEL:
+                ActionUtils.toggleVolumePanel(mContext);
             default:
                 break;
         }

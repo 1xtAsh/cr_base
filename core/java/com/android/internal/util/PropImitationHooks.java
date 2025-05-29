@@ -374,18 +374,6 @@ public class PropImitationHooks {
         return gmsUid == callingUid;
     }
 
-    private static boolean isCallerSafetyNet() {
-        return sIsGms && Arrays.stream(Thread.currentThread().getStackTrace())
-                .anyMatch(elem -> elem.getClassName().contains("DroidGuard"));
-    }
-
-        // Check stack for SafetyNet or Play Integrity
-        if (isCallerSafetyNet() || sIsFinsky) {
-            dlog("Blocked key attestation sIsGms=" + sIsGms + " sIsFinsky=" + sIsFinsky);
-            throw new UnsupportedOperationException();
-        }
-    }
-
     public static boolean hasSystemFeature(String name, boolean has) {
         if (sIsPhotos) {
             if (has && (sPixelFeatures.stream().anyMatch(name::contains)

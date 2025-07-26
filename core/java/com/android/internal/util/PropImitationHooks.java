@@ -85,7 +85,7 @@ public class PropImitationHooks {
             "com.google.android.gms/.auth.uiflows.minutemaid.MinuteMaidActivity");
 
     private static final Boolean sDisableGmsProps = SystemProperties.getBoolean(
-            "persist.sys.pihooks.disable.gms_props", false);
+            "persist.sys.pihooks.disable.gms_props", true);
 
     private static final Map<String, String> sPixelNineXLProps = Map.of(
             "PRODUCT", "komodo",

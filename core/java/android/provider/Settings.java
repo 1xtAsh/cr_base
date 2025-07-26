@@ -12905,13 +12905,6 @@ public final class Settings {
         public static final String BERRY_BLACK_THEME = "berry_black_theme";
 
         /**
-         * User selectable keybox data.
-         * @hide
-         */
-        @Readable
-        public static final String KEYBOX_DATA = "keybox_data";
-
-        /**
          * Whether volume panel should appear on the left (or right).
          * 0 = false (on the right)
          * 1 = true (on the left)

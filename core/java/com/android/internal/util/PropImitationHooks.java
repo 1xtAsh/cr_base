@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Paranoid Android
+ * Copyright (C) 2022 Paranoid Android
  *           (C) 2023 ArrowOS
  *           (C) 2023 The LibreMobileOS Foundation
  *
@@ -86,9 +86,6 @@ public class PropImitationHooks {
 
     private static final Boolean sDisableGmsProps = SystemProperties.getBoolean(
             "persist.sys.pihooks.disable.gms_props", false);
-
-    private static final Boolean sDisableKeyAttestationBlock = SystemProperties.getBoolean(
-        "persist.sys.pihooks.disable.gms_key_attestation_block", false);
 
     private static final Map<String, String> sPixelNineXLProps = Map.of(
             "PRODUCT", "komodo",
@@ -381,18 +378,6 @@ public class PropImitationHooks {
         return sIsGms && Arrays.stream(Thread.currentThread().getStackTrace())
                 .anyMatch(elem -> elem.getClassName().contains("DroidGuard"));
     }
-
-    public static void onEngineGetCertificateChain() {
-        if (sDisableKeyAttestationBlock) {
-            dlog("Key attestation blocking is disabled by user");
-            return;
-        }
-
-        // If a keybox is found, don't block key attestation
-        if (KeyProviderManager.isKeyboxAvailable()) {
-            dlog("Key attestation blocking is disabled because a keybox is defined to spoof");
-            return;
-        }
 
         // Check stack for SafetyNet or Play Integrity
         if (isCallerSafetyNet() || sIsFinsky) {

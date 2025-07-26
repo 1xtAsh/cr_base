@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2022-2024 Paranoid Android
- *           (C) 2023 StatiXOS
  *           (C) 2023 ArrowOS
  *           (C) 2023 The LibreMobileOS Foundation
  *
@@ -27,7 +26,6 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Binder;
-import android.os.Environment;
 import android.os.Process;
 import android.os.SystemProperties;
 import android.text.TextUtils;
@@ -35,18 +33,8 @@ import android.util.Log;
 
 import com.android.internal.R;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -100,9 +88,7 @@ public class PropImitationHooks {
             "persist.sys.pihooks.disable.gms_props", false);
 
     private static final Boolean sDisableKeyAttestationBlock = SystemProperties.getBoolean(
-            "persist.sys.pihooks.disable.gms_key_attestation_block", false);
-
-    private static final String DATA_FILE = "gms_certified_props.json";
+        "persist.sys.pihooks.disable.gms_key_attestation_block", false);
 
     private static final Map<String, String> sPixelNineXLProps = Map.of(
             "PRODUCT", "komodo",
@@ -180,7 +166,7 @@ public class PropImitationHooks {
             "PIXEL_2024_MIDYEAR_EXPERIENCE"
     );
 
-    private static volatile List<String> sCertifiedProps = new ArrayList<>();
+    private static volatile String[] sCertifiedProps;
     private static volatile String sStockFp, sNetflixModel;
 
     private static volatile String sProcessName;
@@ -201,6 +187,7 @@ public class PropImitationHooks {
             return;
         }
 
+        sCertifiedProps = res.getStringArray(R.array.config_certifiedBuildProperties);
         sStockFp = res.getString(R.string.config_stockFingerprint);
         sNetflixModel = res.getString(R.string.config_netflixSpoofModel);
 
@@ -221,7 +208,7 @@ public class PropImitationHooks {
         switch (processName) {
             case PROCESS_GMS_UNSTABLE:
                 dlog("Setting certified props for: " + packageName + " process: " + processName);
-                setCertifiedPropsForGms(context);
+                setCertifiedPropsForGms();
                 return;
             case PROCESS_GMS_PERSISTENT:
             case PROCESS_GMS_GAPPS:
@@ -298,7 +285,7 @@ public class PropImitationHooks {
         }
     }
 
-    private static void setCertifiedPropsForGms(Context context) {
+    private static void setCertifiedPropsForGms() {
         if (sDisableGmsProps) {
             dlog("GMS prop imitation is disabled by user");
             setSystemProperty(PROP_SECURITY_PATCH, Build.VERSION.SECURITY_PATCH);
@@ -307,28 +294,9 @@ public class PropImitationHooks {
             return;
         }
 
-        File dataFile = new File(Environment.getDataSystemDirectory(), DATA_FILE);
-        String savedProps = readFromFile(dataFile);
-
-        if (TextUtils.isEmpty(savedProps)) {
-            Log.d(TAG, "Parsing props locally - data file unavailable");
-            sCertifiedProps = Arrays.asList(context.getResources().getStringArray(R.array.config_certifiedBuildProperties));
-        } else {
-            Log.d(TAG, "Parsing props fetched by attestation service");
-            try {
-                JSONObject parsedProps = new JSONObject(savedProps);
-                Iterator<String> keys = parsedProps.keys();
-
-                while (keys.hasNext()) {
-                    String key = keys.next();
-                    String value = parsedProps.getString(key);
-                    sCertifiedProps.add(key + ":" + value);
-                }
-            } catch (JSONException e) {
-                Log.e(TAG, "Error parsing JSON data", e);
-                Log.d(TAG, "Parsing props locally as fallback");
-                sCertifiedProps = Arrays.asList(context.getResources().getStringArray(R.array.config_certifiedBuildProperties));
-            }
+        if (sCertifiedProps.length == 0) {
+            dlog("Certified props are not set");
+            return;
         }
         final boolean was = isGmsAddAccountActivityOnTop();
         final TaskStackListener taskStackListener = new TaskStackListener() {
@@ -368,23 +336,6 @@ public class PropImitationHooks {
         setSystemProperty(PROP_SECURITY_PATCH, Build.VERSION.SECURITY_PATCH);
         setSystemProperty(PROP_FIRST_API_LEVEL,
                 Integer.toString(Build.VERSION.DEVICE_INITIAL_SDK_INT));
-    }
-
-    private static String readFromFile(File file) {
-        StringBuilder content = new StringBuilder();
-
-        if (file.exists()) {
-            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-                String line;
-
-                while ((line = reader.readLine()) != null) {
-                    content.append(line);
-                }
-            } catch (IOException e) {
-                Log.e(TAG, "Error reading from file", e);
-            }
-        }
-        return content.toString();
     }
 
     private static void setSystemProperty(String name, String value) {
